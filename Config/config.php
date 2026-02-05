@@ -5,6 +5,8 @@ use MauticPlugin\MauticMultiCaptchaBundle\EventListener\HcaptchaFormSubscriber;
 use MauticPlugin\MauticMultiCaptchaBundle\EventListener\RecaptchaFormSubscriber;
 use MauticPlugin\MauticMultiCaptchaBundle\EventListener\TurnstileFormSubscriber;
 
+use MauticPlugin\MauticMultiCaptchaBundle\Controller\AltchaApiController;
+
 use MauticPlugin\MauticMultiCaptchaBundle\Service\AltchaClient;
 use MauticPlugin\MauticMultiCaptchaBundle\Service\HcaptchaClient;
 use MauticPlugin\MauticMultiCaptchaBundle\Service\RecaptchaClient;
@@ -14,10 +16,6 @@ use MauticPlugin\MauticMultiCaptchaBundle\Integration\AltchaIntegration;
 use MauticPlugin\MauticMultiCaptchaBundle\Integration\HcaptchaIntegration;
 use MauticPlugin\MauticMultiCaptchaBundle\Integration\RecaptchaIntegration;
 use MauticPlugin\MauticMultiCaptchaBundle\Integration\TurnstileIntegration;
-
-use MauticPlugin\MauticMultiCaptchaBundle\Controller\AltchaApiController;
-
-
 
 use Mautic\CoreBundle\Helper\AppVersion;
 
@@ -80,7 +78,7 @@ return [
         "public" => [
             "mautic_altcha_api_challenge" => [
                 "path"       => "/altcha/api/challenge",
-                "controller" => "mautic.altcha.controller.api:generateChallengeAction",
+                "controller" => "mautic.altcha.controller.api::generateChallengeAction",
                 "method"     => "GET"
             ]
         ]
@@ -141,6 +139,7 @@ return [
         "controllers" => [
             "mautic.altcha.controller.api" => [
                 "class" => AltchaApiController::class,
+
                 "arguments" => [
                     "mautic.altcha.service.altcha_client"
                 ]

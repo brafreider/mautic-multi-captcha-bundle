@@ -3,10 +3,11 @@
 namespace MauticPlugin\MauticMultiCaptchaBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
+
 use Symfony\Component\Form\FormBuilderInterface;
+
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Validator\Constraints\Range;
+
 use MauticPlugin\MauticMultiCaptchaBundle\Integration\AltchaIntegration;
 
 /**

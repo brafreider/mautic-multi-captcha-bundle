@@ -34,6 +34,8 @@ ALTCHA is designed with privacy in mind and offers significant advantages for GD
 
 This makes ALTCHA an ideal choice for organizations that need to comply with strict data protection regulations while still protecting their forms from spam and abuse. Because of this, it requires slightly different (manual) configuration than the other solutions.
 
+**Make sure your Mautic instance has API access enabled in the system configuration!**
+
 Generate a secure random string to use as your (Hash-based Message Authentication Code) HMAC key. You can copy the output of the following (bash) command:
 ```bash
 openssl rand -hex 32

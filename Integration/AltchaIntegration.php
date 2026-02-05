@@ -3,7 +3,9 @@
 namespace MauticPlugin\MauticMultiCaptchaBundle\Integration;
 
 use Mautic\PluginBundle\Integration\AbstractIntegration;
+
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+
 use Symfony\Component\Validator\Constraints\Range;
 
 /**
@@ -44,44 +46,44 @@ class AltchaIntegration extends AbstractIntegration {
     public function appendToForm(&$builder, $data, $formArea): void {
         if($formArea === "keys") {
             $builder->add("maxNumber", NumberType::class, [
-                "label" => "strings.altcha.settings.max_number",
+                "label"    => "strings.altcha.settings.max_number",
                 "required" => false,
-                "data" => isset($data["maxNumber"]) ? (int) $data["maxNumber"] : 50000,
+                "data"     => isset($data["maxNumber"]) ? (int) $data["maxNumber"] : 50000,
 
                 "label_attr" => [
                     "class" => "control-label"
                 ],
 
                 "attr" => [
-                    "class" => "form-control",
+                    "class"   => "form-control",
                     "tooltip" => "strings.altcha.settings.max_number.tooltip"
                 ],
 
                 "constraints" => [
                     new Range([
-                        "min" => 1000,
-                        "max" => 1000000,
+                        "min"               => 1000,
+                        "max"               => 1000000,
                         "notInRangeMessage" => "Value must be between {{ min }} and {{ max }}"
                     ])
                 ]
             ])->add("expires", NumberType::class, [
-                "label" => "strings.altcha.settings.expires",
+                "label"    => "strings.altcha.settings.expires",
                 "required" => false,
-                "data" => isset($data["expires"]) ? (int) $data["expires"] : 120,
+                "data"     => isset($data["expires"]) ? (int) $data["expires"] : 120,
 
                 "label_attr" => [
                     "class" => "control-label"
                 ],
 
                 "attr" => [
-                    "class" => "form-control",
+                    "class"   => "form-control",
                     "tooltip" => "strings.altcha.settings.expires.tooltip"
                 ],
 
                 "constraints" => [
                     new Range([
-                        "min" => 10,
-                        "max" => 300,
+                        "min"               => 10,
+                        "max"               => 300,
                         "notInRangeMessage" => "Value must be between {{ min }} and {{ max }}"
                     ])
                 ]

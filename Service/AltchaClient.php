@@ -30,6 +30,7 @@ use MauticPlugin\MauticMultiCaptchaBundle\Integration\AltchaIntegration;
 class AltchaClient {
 
     private ?Altcha $altcha = null;
+
     private ?AbstractIntegration $integrationObject = null;
 
     /**
@@ -68,15 +69,14 @@ class AltchaClient {
      * @return array Configuration array with maxNumber and expires values
      */
     public function getConfiguration(): array {
-        if (!$this->integrationObject instanceof AbstractIntegration) {
+        if(!$this->integrationObject instanceof AbstractIntegration)
             return [];
-        }
 
         $keys = $this->integrationObject->getKeys();
 
         return [
-            'maxNumber' => isset($keys['maxNumber']) ? (int) $keys['maxNumber'] : null,
-            'expires' => isset($keys['expires']) ? (int) $keys['expires'] : null
+            "maxNumber" => isset($keys["maxNumber"]) ? (int) $keys["maxNumber"] : null,
+            "expires"   => isset($keys["expires"]) ? (int) $keys["expires"] : null
         ];
     }
 
