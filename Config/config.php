@@ -17,8 +17,10 @@ use Mautic\CoreBundle\Helper\AppVersion;
 // assume that Mautic developers use sane versioning
 $mauticVersion = str_replace(".", "", explode("-", (new AppVersion())->getVersion())[0]);
 
+$mauticVersion = str_split((string)$mauticVersion);
+
 switch(true) {
-    case $mauticVersion >= 600:
+    case $mauticVersion[0] >= 6:
         $defaultIntegrationArguments = [
             "event_dispatcher",
             "mautic.helper.cache_storage",
@@ -38,7 +40,7 @@ switch(true) {
             "mautic.lead.field.fields_with_unique_identifier"
         ];
         break;
-    case $mauticVersion >= 500:
+    case $mauticVersion[0] >= 5:
         $defaultIntegrationArguments = [
             "event_dispatcher",
             "mautic.helper.cache_storage",
