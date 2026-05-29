@@ -3,9 +3,9 @@
 [![mautic6](https://img.shields.io/badge/mautic-6-blue.svg)](https://www.mautic.org/mixin/recaptcha/)
 [![mautic7](https://img.shields.io/badge/mautic-7-blue.svg)](https://www.mautic.org/mixin/recaptcha/)
 
-This project has been pruned to **ONLY** support Mautic 6 and has been tested on Mautic 7.0.0-alpha.
-You _can_ use it with Mautic 5 as well, but we do not officially support this.
-Any issues opened from Mautic 5 will be regarded as spam.
+This project has been pruned to only support Mautic 6 and Mautic 7. You can use it with Mautic 5 as well, but we do not officially support this.
+
+This plugin is offered by FireMultimedia. Would you like to use Mautic worry-free, with built-in extra features like this plugin? Get in touch with us at https://www.firemultimedia.nl/mautic-hosting/.
 
 ## Installation
  1. Execute `composer require firemultimedia/mautic-multi-captcha-bundle` in the main directory of the mautic installation
