@@ -39,7 +39,7 @@ class TurnstileFormSubscriber implements EventSubscriberInterface {
 
     public const MODEL_NAME_KEY_LEAD = "lead.lead";
 
-    private TranslatorInterface $translator;
+    private ?TranslatorInterface $translator;
 
     private bool $isConfigured = false;
 
@@ -62,9 +62,9 @@ class TurnstileFormSubscriber implements EventSubscriberInterface {
     ) {
         $integrationObject = $integrationHelper->getIntegrationObject(TurnstileIntegration::INTEGRATION_NAME);
 
-        $this->translator = $integrationObject->getTranslator();
-
         if($integrationObject instanceof AbstractIntegration) {
+            $this->translator = $integrationObject->getTranslator();
+
             $keys = $integrationObject->getKeys();
 
             $this->siteKey = $keys["site_key"] ?? null;
