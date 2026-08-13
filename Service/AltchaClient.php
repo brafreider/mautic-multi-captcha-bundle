@@ -65,7 +65,7 @@ class AltchaClient {
      * 
      * Retrieves the ALTCHA configuration settings from the integration.
      *
-     * @return array Configuration array with maxNumber and expires values
+     * @return array Configuration array with maxNumber, expires and algorithm values
      */
     public function getConfiguration(): array {
         if (!$this->integrationObject instanceof AbstractIntegration) {
@@ -76,7 +76,8 @@ class AltchaClient {
 
         return [
             'maxNumber' => isset($keys['maxNumber']) ? (int) $keys['maxNumber'] : null,
-            'expires' => isset($keys['expires']) ? (int) $keys['expires'] : null
+            'expires' => isset($keys['expires']) ? (int) $keys['expires'] : null,
+            'algorithm' => $keys['algorithm'] ?? null
         ];
     }
 
@@ -85,19 +86,24 @@ class AltchaClient {
      * 
      * Generates a new ALTCHA challenge with the specified parameters.
      *
-     * @param int $maxNumber Maximum random number for the challenge (1000-1000000)
-     * @param int $expiresInSeconds Challenge expiration time in seconds (10-300)
-     * 
+     * @param int $maxNumber Maximum random number for the challenge (1000-100000000)
+     * @param int $expiresInSeconds Challenge expiration time in seconds (10-600)
+     * @param string $algorithm Hash algorithm to use (SHA-1, SHA-256 or SHA-512)
+     *
      * @return array Challenge data containing algorithm, challenge, salt, signature, maxnumber, and expires
      */
-    public function createChallenge(int $maxNumber, int $expiresInSeconds): array {
+    public function createChallenge(int $maxNumber, int $expiresInSeconds, string $algorithm = "SHA-256"): array {
         try {
             // Create challenge with expiration time
             $expires = new DateTimeImmutable();
 
             $expires = $expires->add(new DateInterval("PT{$expiresInSeconds}S"));
-            
-            $challenge = $this->altcha->createChallenge(new ChallengeOptions(Algorithm::SHA256, $maxNumber, $expires));
+
+            $challenge = $this->altcha->createChallenge(new ChallengeOptions(
+                Algorithm::tryFrom($algorithm) ?? Algorithm::SHA256,
+                $maxNumber,
+                $expires
+            ));
 
             // Convert Challenge object to array
             return [

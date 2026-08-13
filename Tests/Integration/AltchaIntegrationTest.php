@@ -4,6 +4,9 @@ namespace MauticPlugin\MauticMultiCaptchaBundle\Tests\Integration;
 
 use MauticPlugin\MauticMultiCaptchaBundle\Integration\AltchaIntegration;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Forms;
+use Symfony\Component\Validator\Validation;
 
 /**
  * Property-Based Tests for AltchaIntegration
@@ -179,6 +182,137 @@ class AltchaIntegrationTest extends TestCase {
         $this->assertIsArray($fields);
         $this->assertArrayHasKey('hmac_key', $fields);
         $this->assertEquals('strings.altcha.settings.hmac_key', $fields['hmac_key']);
+    }
+
+    /**
+     * Unit test: appendToForm adds algorithm, maxNumber and expires fields
+     * for the "keys" form area, with the expected defaults.
+     *
+     * @test
+     */
+    public function testAppendToFormAddsComplexityFieldsWithDefaults(): void {
+        $integration = new class extends AltchaIntegration {
+            public function __construct() {
+            }
+        };
+
+        $formFactory = Forms::createFormFactoryBuilder()
+            ->addExtension(new \Symfony\Component\Form\Extension\Validator\ValidatorExtension(
+                Validation::createValidator()
+            ))
+            ->getFormFactory();
+
+        $builder = $formFactory->createBuilder(FormType::class, []);
+
+        $integration->appendToForm($builder, [], 'keys');
+
+        $form = $builder->getForm();
+
+        $this->assertTrue($form->has('algorithm'));
+        $this->assertTrue($form->has('maxNumber'));
+        $this->assertTrue($form->has('expires'));
+
+        $this->assertEquals('SHA-256', $form->get('algorithm')->getData());
+        $this->assertEquals(1000000, $form->get('maxNumber')->getData());
+        $this->assertEquals(180, $form->get('expires')->getData());
+    }
+
+    /**
+     * Unit test: appendToForm uses previously stored values instead of
+     * defaults when present in $data.
+     *
+     * @test
+     */
+    public function testAppendToFormUsesStoredValuesOverDefaults(): void {
+        $integration = new class extends AltchaIntegration {
+            public function __construct() {
+            }
+        };
+
+        $formFactory = Forms::createFormFactoryBuilder()
+            ->addExtension(new \Symfony\Component\Form\Extension\Validator\ValidatorExtension(
+                Validation::createValidator()
+            ))
+            ->getFormFactory();
+
+        $storedData = [
+            'algorithm' => 'SHA-512',
+            'maxNumber' => 2500000,
+            'expires' => 240
+        ];
+
+        $builder = $formFactory->createBuilder(FormType::class, $storedData);
+
+        $integration->appendToForm($builder, $storedData, 'keys');
+
+        $form = $builder->getForm();
+
+        $this->assertEquals('SHA-512', $form->get('algorithm')->getData());
+        $this->assertEquals(2500000, $form->get('maxNumber')->getData());
+        $this->assertEquals(240, $form->get('expires')->getData());
+    }
+
+    /**
+     * Unit test: appendToForm does nothing for form areas other than "keys".
+     *
+     * @test
+     */
+    public function testAppendToFormIgnoresNonKeysFormArea(): void {
+        $integration = new class extends AltchaIntegration {
+            public function __construct() {
+            }
+        };
+
+        $formFactory = Forms::createFormFactoryBuilder()->getFormFactory();
+        $builder = $formFactory->createBuilder(FormType::class, []);
+
+        $integration->appendToForm($builder, [], 'features');
+
+        $form = $builder->getForm();
+
+        $this->assertFalse($form->has('algorithm'));
+        $this->assertFalse($form->has('maxNumber'));
+        $this->assertFalse($form->has('expires'));
+    }
+
+    /**
+     * Property Test: maxNumber Range Enforcement
+     *
+     * For values within the documented 1000-100000000 range, the maxNumber
+     * field should accept and preserve the value; the underlying Range
+     * constraint's bounds must match what the field's tooltip documents.
+     *
+     * Generator: Random maxNumber within [1000, 100000000]
+     * Iterations: 50
+     *
+     * @test
+     */
+    public function testMaxNumberFieldAcceptsDocumentedRange(): void {
+        $integration = new class extends AltchaIntegration {
+            public function __construct() {
+            }
+        };
+
+        $formFactory = Forms::createFormFactoryBuilder()
+            ->addExtension(new \Symfony\Component\Form\Extension\Validator\ValidatorExtension(
+                Validation::createValidator()
+            ))
+            ->getFormFactory();
+
+        for ($i = 0; $i < 50; $i++) {
+            $value = rand(1000, 100000000);
+
+            $builder = $formFactory->createBuilder(FormType::class, []);
+            $integration->appendToForm($builder, ['maxNumber' => $value], 'keys');
+            $form = $builder->getForm();
+
+            $form->submit(['algorithm' => 'SHA-256', 'maxNumber' => $value, 'expires' => 180]);
+
+            $this->assertTrue(
+                $form->get('maxNumber')->isValid(),
+                "maxNumber={$value} should be within the documented valid range"
+            );
+        }
     }
 
 }

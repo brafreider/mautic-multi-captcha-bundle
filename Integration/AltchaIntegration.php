@@ -3,6 +3,7 @@
 namespace MauticPlugin\MauticMultiCaptchaBundle\Integration;
 
 use Mautic\PluginBundle\Integration\AbstractIntegration;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Validator\Constraints\Range;
 
@@ -43,10 +44,29 @@ class AltchaIntegration extends AbstractIntegration {
     /** {@inheritDoc} */
     public function appendToForm(&$builder, $data, $formArea): void {
         if($formArea === "keys") {
-            $builder->add("maxNumber", NumberType::class, [
+            $builder->add("algorithm", ChoiceType::class, [
+                "label" => "strings.altcha.settings.algorithm",
+                "required" => false,
+                "data" => $data["algorithm"] ?? "SHA-256",
+
+                "choices" => [
+                    "SHA-1"   => "SHA-1",
+                    "SHA-256" => "SHA-256",
+                    "SHA-512" => "SHA-512"
+                ],
+
+                "label_attr" => [
+                    "class" => "control-label"
+                ],
+
+                "attr" => [
+                    "class" => "form-control",
+                    "tooltip" => "strings.altcha.settings.algorithm.tooltip"
+                ]
+            ])->add("maxNumber", NumberType::class, [
                 "label" => "strings.altcha.settings.max_number",
                 "required" => false,
-                "data" => isset($data["maxNumber"]) ? (int) $data["maxNumber"] : 50000,
+                "data" => isset($data["maxNumber"]) ? (int) $data["maxNumber"] : 1000000,
 
                 "label_attr" => [
                     "class" => "control-label"
@@ -60,14 +80,14 @@ class AltchaIntegration extends AbstractIntegration {
                 "constraints" => [
                     new Range([
                         "min" => 1000,
-                        "max" => 1000000,
+                        "max" => 100000000,
                         "notInRangeMessage" => "Value must be between {{ min }} and {{ max }}"
                     ])
                 ]
             ])->add("expires", NumberType::class, [
                 "label" => "strings.altcha.settings.expires",
                 "required" => false,
-                "data" => isset($data["expires"]) ? (int) $data["expires"] : 120,
+                "data" => isset($data["expires"]) ? (int) $data["expires"] : 180,
 
                 "label_attr" => [
                     "class" => "control-label"
@@ -81,7 +101,7 @@ class AltchaIntegration extends AbstractIntegration {
                 "constraints" => [
                     new Range([
                         "min" => 10,
-                        "max" => 300,
+                        "max" => 600,
                         "notInRangeMessage" => "Value must be between {{ min }} and {{ max }}"
                     ])
                 ]

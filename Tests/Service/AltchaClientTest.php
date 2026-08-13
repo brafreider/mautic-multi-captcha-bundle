@@ -354,6 +354,76 @@ class AltchaClientTest extends TestCase {
     }
 
     /**
+     * Test: createChallenge honors the requested hash algorithm
+     *
+     * **Feature: ALTCHA-integration, Configurable Algorithm**
+     * **Validates: The algorithm parameter is passed through to the challenge**
+     *
+     * For each supported algorithm string, createChallenge should produce a
+     * challenge whose 'algorithm' field matches what was requested.
+     *
+     * @test
+     */
+    public function testCreateChallengeHonorsRequestedAlgorithm(): void {
+        $client = $this->createAltchaClient();
+
+        foreach (['SHA-1', 'SHA-256', 'SHA-512'] as $algorithm) {
+            $challenge = $client->createChallenge(1000, 120, $algorithm);
+
+            $this->assertNotEmpty($challenge, "Challenge generation failed for algorithm {$algorithm}");
+            $this->assertEquals($algorithm, $challenge['algorithm']);
+        }
+    }
+
+    /**
+     * Test: createChallenge falls back to SHA-256 for an unknown algorithm string
+     *
+     * **Feature: ALTCHA-integration, Configurable Algorithm**
+     * **Validates: Invalid/unrecognized algorithm values degrade safely**
+     *
+     * @test
+     */
+    public function testCreateChallengeFallsBackToSha256ForUnknownAlgorithm(): void {
+        $client = $this->createAltchaClient();
+
+        $challenge = $client->createChallenge(1000, 120, 'not-a-real-algorithm');
+
+        $this->assertNotEmpty($challenge);
+        $this->assertEquals('SHA-256', $challenge['algorithm']);
+    }
+
+    /**
+     * Test: createChallenge defaults to SHA-256 when no algorithm is given
+     *
+     * @test
+     */
+    public function testCreateChallengeDefaultsToSha256(): void {
+        $client = $this->createAltchaClient();
+
+        $challenge = $client->createChallenge(1000, 120);
+
+        $this->assertNotEmpty($challenge);
+        $this->assertEquals('SHA-256', $challenge['algorithm']);
+    }
+
+    /**
+     * Test: getConfiguration returns the configured algorithm string
+     *
+     * @test
+     */
+    public function testGetConfigurationReturnsConfiguredAlgorithm(): void {
+        $client = $this->createAltchaClientWithConfig([
+            'hmac_key' => 'test-hmac-key',
+            'algorithm' => 'SHA-512'
+        ]);
+
+        $config = $client->getConfiguration();
+
+        $this->assertArrayHasKey('algorithm', $config);
+        $this->assertEquals('SHA-512', $config['algorithm']);
+    }
+
+    /**
      * Helper: Create AltchaClient with mocked dependencies
      */
     private function createAltchaClient(): AltchaClient {

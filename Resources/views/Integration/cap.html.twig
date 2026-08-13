@@ -147,26 +147,12 @@ Varables
 
 {% set formName = formName|replace({'_': ''})|default('mauticform') %}
 
-{% block altcha %}
-    {# Get field configuration #}
-    {% set invisible = field.properties.invisible|default(false) %}
-
-    {# Load ALTCHA script via JavaScript to preserve type="module" #}
-    {% if inForm is not defined or not inForm %}
-    <script>
-        (function() {
-            var script = document.createElement("script");
-
-            script.type = "module";
-            script.src  = "{{ absolute_url(asset("plugins/MauticMultiCaptchaBundle/Assets/js/altcha.min.js")) }}";
-
-            document.head.appendChild(script);
-        })();
-    </script>
-    {% endif %}
+{% block cap %}
+    {% set serverUrl = field.customParameters.server_url|default('')|trim('/', 'right') %}
+    {% set siteKey = field.customParameters.site_key|default(null) %}
 
     {% if field.showLabel %}
-        <label {% for attrName, attrValue in labelAttributes %}{{ attrName }}="{% if attrValue is iterable %}{{ attrValue|join(' ') }}{% else %}{{ attrValue }}{% endif %}"{% endfor %}{% if invisible %} style="display: none;"{% endif %}>
+        <label {% for attrName, attrValue in labelAttributes %}{{ attrName }}="{% if attrValue is iterable %}{{ attrValue|join(' ') }}{% else %}{{ attrValue }}{% endif %}"{% endfor %}>
             {{ field.label }}
         </label>
     {% endif %}
@@ -180,24 +166,26 @@ Varables
         {% if inForm is defined and (true == inForm or inForm is not empty) %}
             {# In backend form builder - show placeholder only, no active widget #}
             <div style="padding: 10px; background: #f5f5f5; border: 1px dashed #ccc; text-align: center;">
-                ALTCHA Widget ({% if invisible %}invisible mode{% else %}visible mode{% endif %})
+                Cap CAPTCHA Widget
             </div>
         {% else %}
-            {# In frontend - show active Altcha widget with challengeurl for dynamic loading #}
-            
-            <div style="isolation: isolate;" class="mauticform-inner">
-                <altcha-widget
-                    {% if invisible %}auto="onload" hidefooter hidelogo{% endif %}
-                    challengeurl="{{ absolute_url(path('mautic_altcha_api_challenge')) }}"
-                    name="{{ inputAttributes.name }}"
-                    id="{{ inputAttributes.id }}"
-                    workers="1"
-                    blockspam="false"
-                    spamfilter="false"
-                    verifyurl=""
-                    refetchonexpire="true"
-                    expire="300000"
-                ></altcha-widget>
+            {# In frontend - point the self-hosted widget script at our self-hosted WASM solver #}
+            <script>
+                window.CAP_CUSTOM_WASM_URL = "{{ absolute_url(asset("plugins/MauticMultiCaptchaBundle/Assets/js/cap_wasm_bg.wasm")) }}";
+            </script>
+
+            <script>
+                (function() {
+                    var script = document.createElement("script");
+
+                    script.src = "{{ absolute_url(asset("plugins/MauticMultiCaptchaBundle/Assets/js/cap.min.js")) }}";
+
+                    document.head.appendChild(script);
+                })();
+            </script>
+
+            <div class="mauticform-inner">
+                <cap-widget data-cap-api-endpoint="{{ serverUrl }}/{{ siteKey }}/"></cap-widget>
             </div>
         {% endif %}
     </div>

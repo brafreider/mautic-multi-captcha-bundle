@@ -42,11 +42,12 @@ class AltchaApiController
         try {
             // Get configuration values from global settings with fallback defaults
             $config = $this->altchaClient->getConfiguration();
-            $maxNumber = $config['maxNumber'] ?? 50000;  // Default difficulty
-            $expires = $config['expires'] ?? 120;        // Default 2 minutes expiry
-            
+            $maxNumber = $config['maxNumber'] ?? 1000000;  // Default difficulty
+            $expires = $config['expires'] ?? 180;          // Default 3 minutes expiry
+            $algorithm = $config['algorithm'] ?? 'SHA-256';
+
             // Generate challenge
-            $challengeData = $this->altchaClient->createChallenge($maxNumber, $expires);
+            $challengeData = $this->altchaClient->createChallenge($maxNumber, $expires, $algorithm);
             
             if (empty($challengeData)) {
                 return new JsonResponse([

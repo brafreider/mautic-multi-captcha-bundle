@@ -27,22 +27,24 @@ class AltchaApiControllerTest extends TestCase {
     public function testApiUsesConfiguredMaxNumber(): void {
         $configuredMaxNumber = 75000;
         $configuredExpires = 180;
+        $configuredAlgorithm = 'SHA-512';
 
         // Mock AltchaClient
         $client = $this->createMock(AltchaClient::class);
-        
+
         // Expect getConfiguration to be called and return configured values
         $client->expects($this->once())
             ->method('getConfiguration')
             ->willReturn([
                 'maxNumber' => $configuredMaxNumber,
-                'expires' => $configuredExpires
+                'expires' => $configuredExpires,
+                'algorithm' => $configuredAlgorithm
             ]);
-        
+
         // Expect createChallenge to be called with configured values
         $client->expects($this->once())
             ->method('createChallenge')
-            ->with($configuredMaxNumber, $configuredExpires)
+            ->with($configuredMaxNumber, $configuredExpires, $configuredAlgorithm)
             ->willReturn([
                 'algorithm' => 'SHA-256',
                 'challenge' => 'test-challenge',
@@ -65,30 +67,32 @@ class AltchaApiControllerTest extends TestCase {
      * **Feature: ALTCHA-API, Default Fallback**
      * **Validates: API uses default values when configuration is missing**
      * 
-     * When maxNumber and expires are not configured, the API endpoint should
-     * use default fallback values (50000 and 120).
-     * 
+     * When maxNumber, expires and algorithm are not configured, the API
+     * endpoint should use default fallback values (1000000, 180, SHA-256).
+     *
      * @test
      */
     public function testApiUsesDefaultValuesWhenNotConfigured(): void {
-        $defaultMaxNumber = 50000;
-        $defaultExpires = 120;
+        $defaultMaxNumber = 1000000;
+        $defaultExpires = 180;
+        $defaultAlgorithm = 'SHA-256';
 
         // Mock AltchaClient
         $client = $this->createMock(AltchaClient::class);
-        
+
         // Expect getConfiguration to be called and return null values
         $client->expects($this->once())
             ->method('getConfiguration')
             ->willReturn([
                 'maxNumber' => null,
-                'expires' => null
+                'expires' => null,
+                'algorithm' => null
             ]);
-        
+
         // Expect createChallenge to be called with default values
         $client->expects($this->once())
             ->method('createChallenge')
-            ->with($defaultMaxNumber, $defaultExpires)
+            ->with($defaultMaxNumber, $defaultExpires, $defaultAlgorithm)
             ->willReturn([
                 'algorithm' => 'SHA-256',
                 'challenge' => 'test-challenge',
@@ -150,8 +154,8 @@ class AltchaApiControllerTest extends TestCase {
         $client = $this->createMock(AltchaClient::class);
         
         $client->method('getConfiguration')
-            ->willReturn(['maxNumber' => 50000, 'expires' => 120]);
-        
+            ->willReturn(['maxNumber' => 50000, 'expires' => 120, 'algorithm' => 'SHA-256']);
+
         // Simulate challenge generation failure
         $client->method('createChallenge')
             ->willReturn([]);
@@ -184,8 +188,8 @@ class AltchaApiControllerTest extends TestCase {
         $client = $this->createMock(AltchaClient::class);
         
         $client->method('getConfiguration')
-            ->willReturn(['maxNumber' => 50000, 'expires' => 120]);
-        
+            ->willReturn(['maxNumber' => 50000, 'expires' => 120, 'algorithm' => 'SHA-256']);
+
         $client->method('createChallenge')
             ->willReturn([
                 'algorithm' => 'SHA-256',
@@ -221,26 +225,29 @@ class AltchaApiControllerTest extends TestCase {
     public function testApiUsesVariousConfiguredValuesCorrectly(): void {
         $iterations = 50;
         $failures = [];
+        $algorithms = ['SHA-1', 'SHA-256', 'SHA-512'];
 
         for ($i = 0; $i < $iterations; $i++) {
-            $maxNumber = rand(1000, 1000000);
-            $expires = rand(10, 300);
+            $maxNumber = rand(1000, 100000000);
+            $expires = rand(10, 600);
+            $algorithm = $algorithms[array_rand($algorithms)];
 
             // Mock AltchaClient
             $client = $this->createMock(AltchaClient::class);
-            
+
             $client->method('getConfiguration')
                 ->willReturn([
                     'maxNumber' => $maxNumber,
-                    'expires' => $expires
+                    'expires' => $expires,
+                    'algorithm' => $algorithm
                 ]);
-            
+
             // Verify createChallenge is called with correct parameters
             $client->expects($this->once())
                 ->method('createChallenge')
-                ->with($maxNumber, $expires)
+                ->with($maxNumber, $expires, $algorithm)
                 ->willReturn([
-                    'algorithm' => 'SHA-256',
+                    'algorithm' => $algorithm,
                     'challenge' => 'test-challenge',
                     'salt' => 'test-salt',
                     'signature' => 'test-signature',
@@ -252,12 +259,13 @@ class AltchaApiControllerTest extends TestCase {
 
             try {
                 $response = $controller->generateChallengeAction($request);
-                
+
                 if ($response->getStatusCode() !== Response::HTTP_OK) {
                     $failures[] = [
                         'iteration' => $i,
                         'maxNumber' => $maxNumber,
                         'expires' => $expires,
+                        'algorithm' => $algorithm,
                         'status' => $response->getStatusCode()
                     ];
                 }
@@ -266,6 +274,7 @@ class AltchaApiControllerTest extends TestCase {
                     'iteration' => $i,
                     'maxNumber' => $maxNumber,
                     'expires' => $expires,
+                    'algorithm' => $algorithm,
                     'exception' => $e->getMessage()
                 ];
             }
