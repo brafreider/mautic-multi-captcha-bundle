@@ -63,7 +63,6 @@ package:
     - cp -r Resources package/MauticMultiCaptchaBundle/
     - cp -r Service package/MauticMultiCaptchaBundle/
     - cp -r Translations package/MauticMultiCaptchaBundle/
-    - cp -r Twig package/MauticMultiCaptchaBundle/
     - cp *.php package/MauticMultiCaptchaBundle/ 2>/dev/null || true
     - cp composer.json package/MauticMultiCaptchaBundle/
     - cp LICENSE package/MauticMultiCaptchaBundle/
