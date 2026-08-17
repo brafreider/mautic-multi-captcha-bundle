@@ -169,9 +169,12 @@ Varables
                 Cap CAPTCHA Widget
             </div>
         {% else %}
-            {# In frontend - point the self-hosted widget script at our self-hosted WASM solver #}
+            {# In frontend - point the self-hosted widget script at our self-hosted WASM solver.
+               Served through a controller route (not the raw static asset) so it can carry an
+               Access-Control-Allow-Origin header: the widget loads this via fetch(), which
+               enforces CORS, unlike its own <script> tag below which does not. #}
             <script>
-                window.CAP_CUSTOM_WASM_URL = "{{ absolute_url(asset("plugins/MauticMultiCaptchaBundle/Assets/js/cap_wasm_bg.wasm")) }}";
+                window.CAP_CUSTOM_WASM_URL = "{{ absolute_url(path("mautic_cap_api_wasm")) }}";
             </script>
 
             <script>

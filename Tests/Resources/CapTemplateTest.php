@@ -57,11 +57,16 @@ class CapTemplateTest extends TestCase {
     /**
      * @test
      */
-    public function testTemplatePointsWasmSolverAtLocalAsset(): void {
+    public function testTemplatePointsWasmSolverAtCorsEnabledRoute(): void {
         $content = file_get_contents(self::TEMPLATE_PATH);
 
         $this->assertStringContainsString('CAP_CUSTOM_WASM_URL', $content);
-        $this->assertStringContainsString(
+
+        // Must go through the CORS-enabled controller route, not the raw
+        // static asset path - the widget fetches this via fetch(), which
+        // enforces CORS, unlike its own <script> tag which does not.
+        $this->assertStringContainsString('mautic_cap_api_wasm', $content);
+        $this->assertStringNotContainsString(
             'plugins/MauticMultiCaptchaBundle/Assets/js/cap_wasm_bg.wasm',
             $content
         );

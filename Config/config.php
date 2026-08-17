@@ -19,6 +19,7 @@ use MauticPlugin\MauticMultiCaptchaBundle\Integration\TurnstileIntegration;
 use MauticPlugin\MauticMultiCaptchaBundle\Integration\CapIntegration;
 
 use MauticPlugin\MauticMultiCaptchaBundle\Controller\AltchaApiController;
+use MauticPlugin\MauticMultiCaptchaBundle\Controller\CapAssetController;
 
 
 
@@ -86,6 +87,12 @@ return [
             "mautic_altcha_api_challenge" => [
                 "path"       => "/altcha/api/challenge",
                 "controller" => "mautic.altcha.controller.api:generateChallengeAction",
+                "method"     => "GET"
+            ],
+
+            "mautic_cap_api_wasm" => [
+                "path"       => "/cap/api/wasm",
+                "controller" => "mautic.cap.controller.asset:wasmAction",
                 "method"     => "GET"
             ]
         ]
@@ -160,6 +167,11 @@ return [
                 "arguments" => [
                     "mautic.altcha.service.altcha_client"
                 ]
+            ],
+
+            "mautic.cap.controller.asset" => [
+                "class" => CapAssetController::class,
+                "arguments" => []
             ]
         ],
 
