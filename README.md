@@ -8,18 +8,19 @@ This project has been pruned to only support Mautic 6 and Mautic 7. You can use 
 This plugin is offered by FireMultimedia. Would you like to use Mautic worry-free, with built-in extra features like this plugin? Get in touch with us at https://www.firemultimedia.nl/mautic-hosting/.
 
 ## Supported CAPTCHA Solutions
-This bundle provides four CAPTCHA options to protect your Mautic forms:
+This bundle provides five CAPTCHA options to protect your Mautic forms:
 - [**ALTCHA**](#ALTCHA): Self-hosted, GDPR-compliant CAPTCHA with no external dependencies (recommended for privacy-sensitive applications)
 - [**hCaptcha**](#hCaptcha): Privacy-focused alternative to reCAPTCHA with accessibility features
 - [**Google reCAPTCHA**](#Google-reCAPTCHA): Industry-standard CAPTCHA with v2 (checkbox) and v3 (invisible scoring) options
 - [**Cloudflare Turnstile**](#Cloudflare-Turnstile): Modern, privacy-respecting CAPTCHA from Cloudflare
+- [**Cap**](#Cap): Self-hosted proof-of-work CAPTCHA (with combined bot/instrumentation detection) - requires your own [Cap Standalone](https://trycap.dev) instance
 
 ## Installation
  1. Execute `composer require firemultimedia/mautic-multi-captcha-bundle` in the main directory of the mautic installation
  2. flush the cache `php bin/console cache:clear`.
  3. Navigate to the Plugins page and click "Install/Upgrade Plugins".
 
-You should now see four new plug-ins: ALTCHA, hCaptcha, Google reCAPTCHA, and Cloudflare Turnstile.
+You should now see five new plug-ins: ALTCHA, hCaptcha, Google reCAPTCHA, Cloudflare Turnstile, and Cap.
 
 ![plugins](.github/doc/plugins.png "plugins")
 
@@ -43,12 +44,15 @@ And paste it here:
 
 ![ALTCHA config](.github/doc/altcha_config.png "ALTCHA config")
 
-The ALTCHA field in the Mautic form can be configured under the "Properties" tab.
+These complexity settings are configured once, globally, under the ALTCHA integration (not per-field) - a challenge endpoint can't be given a reference to a specific form field without weakening its security, so it always uses the global settings below:
 
 ![ALTCHA settings](.github/doc/altcha_settings.png "ALTCHA settings")
 
-- **Max Number** (1000-1000000, default: 50000): Controls the difficulty of the challenge. Higher numbers make the challenge harder to solve but take longer.
-- **Challenge Expires** (10-300 seconds, default: 120): How long the challenge remains valid before expiring.
+- **Hash Algorithm** (SHA-1 / SHA-256 / SHA-512, default: SHA-256): Which hash algorithm the proof-of-work challenge uses. SHA-512 requires more computation per attempt than SHA-256, further increasing difficulty.
+- **Max Number** (1000-100000000, default: 1000000): Controls the difficulty of the challenge. Higher numbers make the challenge harder to solve but take longer.
+- **Challenge Expires** (10-600 seconds, default: 180): How long the challenge remains valid before expiring. Increase this if a higher Max Number causes challenges to expire before they can be solved.
+
+The ALTCHA field itself, on the "Properties" tab of the form, only exposes:
 - **Invisible Mode** (default: off): When enabled, the CAPTCHA widget is hidden and automatically solves the challenge in the background without user interaction.
 
 ALTCHA supports an invisible mode where the challenge is solved automatically in the background without displaying a visible widget to the user. This provides a seamless user experience while still protecting against spam.
@@ -68,9 +72,7 @@ The plugin provides a REST API endpoint for dynamic challenge generation, which 
 
 **Endpoint**: `GET /altcha/api/challenge`
 
-**Parameters**: None (uses secure default values)
-- `maxNumber`: 100000 (fixed for security)
-- `expires`: 300 seconds (fixed for security)
+**Parameters**: None. The endpoint always reads `maxNumber`, `expires` and `algorithm` from the global ALTCHA integration settings described above, falling back to 1000000 / 180 / SHA-256 if the integration isn't configured yet.
 
 **Example Request**:
 ```bash
@@ -82,7 +84,7 @@ curl "https://your-mautic.com/altcha/api/challenge"
 {
     "algorithm": "SHA-256",
     "challenge": "abc123...",
-    "maxnumber": 50000,
+    "maxnumber": 1000000,
     "salt": "def456...",
     "signature": "ghi789..."
 }
@@ -116,6 +118,22 @@ Collect your keys from the [Cloudflare dasboard](https://dash.cloudflare.com/) (
 The Cloudflare Turnstile field in the Mautic form can be configured under the "Properties" tab.
 
 ![Cloudflare Turnstile settings](.github/doc/turnstile_settings.png "Cloudflare Turnstile settings")
+
+### Cap
+Cap combines a SHA-256 proof-of-work challenge with instrumentation/bot detection - both always run together, there is no way (nor a need) to enable just one.
+
+**This integration only supports a self-hosted [Cap Standalone](https://trycap.dev/guide/standalone/) instance.** There is no Cap Cloud/API-key mode. The Mautic plugin never talks to that instance directly for challenge solving - the visitor's browser does, via the widget - Mautic only performs the final server-to-server `/siteverify` call using your secret key.
+
+1. Deploy your own Cap Standalone instance (Docker/npm, see the [Cap docs](https://trycap.dev/guide/standalone/)) and create a site key on it.
+2. Configure the difficulty (proof-of-work difficulty, instrumentation, headless-browser blocking, etc.) on that Cap Standalone instance's own dashboard - none of that is configured in Mautic.
+3. In Mautic, open the Cap integration and fill in:
+   - **Server URL**: base URL of your Cap Standalone instance, e.g. `https://cap.example.com`
+   - **Site Key**
+   - **Secret Key**
+
+The Cap field has no per-field options on the "Properties" tab (both challenge components are always combined, and there's no cookie-consent gate to configure since the widget talks to your own server, not a third party).
+
+**CORS**: unlike ALTCHA's widget script (loaded as an ES6 module, see [ALTCHA-CORS.md](ALTCHA-CORS.md)), Cap's widget script loads as a plain `<script>` and needs no CORS headers. Its WASM proof-of-work solver, however, is fetched via `fetch()`, which does enforce CORS - this plugin already serves that WASM file through its own route (`/cap/api/wasm`) with the required `Access-Control-Allow-Origin` header, so **no manual web-server configuration is needed** even when your forms are embedded on a different domain than Mautic.
 
 ## Usage in Mautic Form
 ### ALTCHA
@@ -159,6 +177,11 @@ Add the "Cloudflare Turnstile" field to the form and save changes.
 |----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | ![Cloudflare Turnstile](.github/doc/turnstile_preview.png "Mautic Form with Cloudflare Turnstile") | ![Cloudflare Turnstile implied consent](.github/doc/turnstile_preview_implicit.png "Mautic Form with Cloudflare Turnstile (implied consent)") |
 
+### Cap
+Add the "Cap" field to the form and save changes. There is only one mode - the widget always runs both challenge components together.
+
+*(Screenshots pending - not yet captured against a live Cap Standalone instance.)*
+
 ## Acknowledgements
 - Original code by [Konstantin Scheumann](https://github.com/KonstantinCodes/)
-- ALTCHA integration by [Björn Rafreider](https://github.com/brafreider/)
+- ALTCHA and Cap integration by [Björn Rafreider](https://github.com/brafreider/)
