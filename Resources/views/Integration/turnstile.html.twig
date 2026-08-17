@@ -162,7 +162,7 @@ Varables
     {% else %}
         <script type="text/javascript">
             function onloadTurnstileCallback() {
-                turnstile.render("#cf_turnstile", {
+                turnstile.render(document.getElementById("cf_turnstile"), {
                     "sitekey": "{{ siteKey }}",
                     "size": "{{ field.properties.size }}",
                     "theme": "{{ field.properties.theme }}",
@@ -213,7 +213,7 @@ Varables
 
             <div id="provider"></div>
         {% else %}
-            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onloadTurnstileCallback"></script>
+            <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onloadTurnstileCallback"></script>
         {% endif %}
 
         <div {% for attrName, attrValue in containerAttributes %}{{ attrName }}="{% if attrValue is iterable %}{{ attrValue|join(' ') }}{% else %}{{ attrValue }}{% endif %}"{% endfor %}>
