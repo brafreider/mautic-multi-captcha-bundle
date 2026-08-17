@@ -40,13 +40,9 @@ Generate a secure random string to use as your (Hash-based Message Authenticatio
 openssl rand -hex 32
 ```
 
-And paste it here:
+Paste it here, alongside the proof-of-work complexity settings - these are configured once, globally, under the ALTCHA integration (not per-field), since a challenge endpoint can't be given a reference to a specific form field without weakening its security:
 
 ![ALTCHA config](.github/doc/altcha_config.png "ALTCHA config")
-
-These complexity settings are configured once, globally, under the ALTCHA integration (not per-field) - a challenge endpoint can't be given a reference to a specific form field without weakening its security, so it always uses the global settings below:
-
-![ALTCHA settings](.github/doc/altcha_settings.png "ALTCHA settings")
 
 - **Hash Algorithm** (SHA-1 / SHA-256 / SHA-512, default: SHA-256): Which hash algorithm the proof-of-work challenge uses. SHA-512 requires more computation per attempt than SHA-256, further increasing difficulty.
 - **Max Number** (1000-100000000, default: 1000000): Controls the difficulty of the challenge. Higher numbers make the challenge harder to solve but take longer.
@@ -131,7 +127,11 @@ Cap combines a SHA-256 proof-of-work challenge with instrumentation/bot detectio
    - **Site Key**
    - **Secret Key**
 
-The Cap field has no per-field options on the "Properties" tab (both challenge components are always combined, and there's no cookie-consent gate to configure since the widget talks to your own server, not a third party).
+![Cap config](.github/doc/cap_config.png "Cap config")
+
+The Cap field has no per-field options on the "Properties" tab (both challenge components are always combined, and there's no cookie-consent gate to configure since the widget talks to your own server, not a third party) - only the same generic label/help-text/save-result options every Mautic field type exposes:
+
+![Cap field settings](.github/doc/cap_field_settings.png "Cap field settings")
 
 **CORS**: unlike ALTCHA's widget script (loaded as an ES6 module, see [ALTCHA-CORS.md](ALTCHA-CORS.md)), Cap's widget script loads as a plain `<script>` and needs no CORS headers. Its WASM proof-of-work solver, however, is fetched via `fetch()`, which does enforce CORS - this plugin already serves that WASM file through its own route (`/cap/api/wasm`) with the required `Access-Control-Allow-Origin` header, so **no manual web-server configuration is needed** even when your forms are embedded on a different domain than Mautic.
 
@@ -180,7 +180,7 @@ Add the "Cloudflare Turnstile" field to the form and save changes.
 ### Cap
 Add the "Cap" field to the form and save changes. There is only one mode - the widget always runs both challenge components together.
 
-*(Screenshots pending - not yet captured against a live Cap Standalone instance.)*
+*(A screenshot of the rendered widget on a live form is still pending - the integration/field configuration screenshots above were captured against a real Cap Standalone instance.)*
 
 ## Acknowledgements
 - Original code by [Konstantin Scheumann](https://github.com/KonstantinCodes/)
