@@ -113,7 +113,17 @@ Für Live-Deployments:
 - Teste API-Endpunkt direkt: `GET /altcha/api/challenge`
 - Bei 503-Fehlern: ALTCHA-Konfiguration prüfen
 
-### 404 für altcha.min.js bei bestehenden Formularen
-Mautic cached das gerenderte Feld-HTML pro Formular in der DB (`Form::$cachedHtml`) und rendert es erst bei erneutem Speichern des Formulars aus dem aktuellen Plugin-Template neu. `altcha.min.js` lag ursprünglich unter `Assets/altcha.min.js` und wurde später nach `Assets/js/altcha.min.js` verschoben - Formulare, die vor diesem Wechsel zuletzt gespeichert wurden, referenzieren in ihrem gecachten HTML weiterhin den alten Pfad.
-- **Sofort behoben**: Das Plugin liefert seit dieser Version die Datei zusätzlich unter dem alten Pfad `Assets/altcha.min.js` mit aus (identische Kopie), sodass beide Pfade funktionieren, unabhängig vom Cache-Stand des Formulars.
-- **Optional, langfristig**: Betroffene Formulare einmal im Formular-Builder öffnen und speichern, damit ihr gecachtes HTML den aktuellen (neuen) Pfad referenziert. Dann könnte die alte Kopie irgendwann wieder entfernt werden - aktuell besser drin lassen, solange nicht sicher ist, dass alle bestehenden Formulare neu gespeichert wurden.
+### 404 für einen Plugin-Asset-Pfad bei bestehenden Formularen (z.B. nach einem Datei-Umzug im Plugin)
+Mautic cached das gerenderte Feld-HTML pro Formular in der DB (`Form::$cachedHtml`, Tabelle `forms`) und rendert es erst bei erneutem Speichern des Formulars aus dem aktuellen Plugin-Template neu (`FormModel::saveEntity()` → `generateHtml()`). Wird im Plugin ein referenzierter Asset-Pfad geändert (z.B. eine Datei verschoben), zeigen bereits gespeicherte Formulare in ihrem gecachten HTML weiterhin auf den alten Pfad, bis der Cache geleert oder das Formular neu gespeichert wird.
+
+Gezielter Fix über die Mautic-eigene DB-Verbindung (keine separaten DB-Zugangsdaten nötig), nur für Formulare mit einem ALTCHA- oder Cap-Feld (Tabellen `forms`/`form_fields`, ggf. Tabellenprefix aus `config/local.php` beachten):
+
+```bash
+# Vorher zählen, wie viele Formulare betroffen sind
+php bin/console dbal:run-sql "SELECT COUNT(*) FROM forms WHERE id IN (SELECT DISTINCT form_id FROM form_fields WHERE type IN ('plugin.altcha','plugin.cap'))"
+
+# Cache gezielt leeren - Mautic rendert beim nächsten Aufruf automatisch neu
+php bin/console dbal:run-sql "UPDATE forms SET cached_html = NULL WHERE id IN (SELECT DISTINCT form_id FROM form_fields WHERE type IN ('plugin.altcha','plugin.cap'))"
+```
+
+`dbal:run-sql` fragt nicht nach Bestätigung - das `SELECT COUNT(*)` vorher ist die einzige Sicherheitsprüfung.
