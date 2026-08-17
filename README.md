@@ -180,7 +180,7 @@ Add the "Cloudflare Turnstile" field to the form and save changes.
 ### Cap
 Add the "Cap" field to the form and save changes. There is only one mode - the widget always runs both challenge components together.
 
-*(A screenshot of the rendered widget on a live form is still pending - the integration/field configuration screenshots above were captured against a real Cap Standalone instance.)*
+![Cap](.github/doc/cap_preview.png "Mautic Form with Cap")
 
 ## Acknowledgements
 - Original code by [Konstantin Scheumann](https://github.com/KonstantinCodes/)
