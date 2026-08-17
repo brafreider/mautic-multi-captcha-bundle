@@ -112,3 +112,8 @@ Für Live-Deployments:
 - Prüfe Browser-Konsole auf JavaScript-Fehler
 - Teste API-Endpunkt direkt: `GET /altcha/api/challenge`
 - Bei 503-Fehlern: ALTCHA-Konfiguration prüfen
+
+### 404 für altcha.min.js bei bestehenden Formularen
+Mautic cached das gerenderte Feld-HTML pro Formular in der DB (`Form::$cachedHtml`) und rendert es erst bei erneutem Speichern des Formulars aus dem aktuellen Plugin-Template neu. `altcha.min.js` lag ursprünglich unter `Assets/altcha.min.js` und wurde später nach `Assets/js/altcha.min.js` verschoben - Formulare, die vor diesem Wechsel zuletzt gespeichert wurden, referenzieren in ihrem gecachten HTML weiterhin den alten Pfad.
+- **Sofort behoben**: Das Plugin liefert seit dieser Version die Datei zusätzlich unter dem alten Pfad `Assets/altcha.min.js` mit aus (identische Kopie), sodass beide Pfade funktionieren, unabhängig vom Cache-Stand des Formulars.
+- **Optional, langfristig**: Betroffene Formulare einmal im Formular-Builder öffnen und speichern, damit ihr gecachtes HTML den aktuellen (neuen) Pfad referenziert. Dann könnte die alte Kopie irgendwann wieder entfernt werden - aktuell besser drin lassen, solange nicht sicher ist, dass alle bestehenden Formulare neu gespeichert wurden.

@@ -247,6 +247,28 @@ class AltchaTemplateTest extends TestCase {
     }
 
     /**
+     * Unit test: Verify the legacy (pre-Assets/js/ move) script path is still
+     * shipped as a duplicate.
+     *
+     * The script originally lived at Assets/altcha.min.js and was moved to
+     * Assets/js/altcha.min.js. Mautic caches a form's rendered field HTML in
+     * the database (Form::$cachedHtml) and only regenerates it when the form
+     * is re-saved, so any form saved before that move still requests the old
+     * path directly from the plugin's static asset directory. Removing this
+     * duplicate breaks ALTCHA on every such pre-existing form until it is
+     * individually re-saved (or its cached HTML cleared).
+     *
+     * @test
+     */
+    public function testLegacyAltchaScriptPathIsStillShippedForCachedForms(): void {
+        $legacyPath = __DIR__ . '/../../Assets/altcha.min.js';
+        $currentPath = __DIR__ . '/../../Assets/js/altcha.min.js';
+
+        $this->assertFileExists($legacyPath, 'Legacy ALTCHA script path (pre-Assets/js/ move) should still be shipped for forms with stale cached HTML');
+        $this->assertFileEquals($currentPath, $legacyPath, 'Legacy and current ALTCHA script files should be identical');
+    }
+
+    /**
      * Unit test: Verify template handles invisible mode
      * 
      * @test
