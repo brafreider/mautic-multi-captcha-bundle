@@ -129,7 +129,12 @@ Cap combines a SHA-256 proof-of-work challenge with instrumentation/bot detectio
 
 ![Cap config](.github/doc/cap_config.png "Cap config")
 
-The Cap field has no per-field options on the "Properties" tab (both challenge components are always combined, and there's no cookie-consent gate to configure since the widget talks to your own server, not a third party) - only the same generic label/help-text/save-result options every Mautic field type exposes:
+The Cap field has one field-level option on the "Properties" tab, **Solve Mode** (there's no cookie-consent gate to configure, since the widget talks to your own server, not a third party):
+- **Manual** (default): the visitor clicks the checkbox themselves.
+- **Auto-solve (widget stays visible)**: the widget solves itself as soon as it loads, no click needed, but the checkbox and Cap's branding link are still shown.
+- **Auto-solve (widget hidden)**: same as above, but the entire widget is hidden. This is the only mode without a visible branding link - Cap's own anti-tamper logic actively restores its branding/credits link whenever the widget itself is visible, so hiding just the link while keeping the checkbox visible isn't possible.
+
+*(The screenshot below predates the Solve Mode option and only shows the generic label/help-text/save-result fields every Mautic field type exposes; it still applies to those.)*
 
 ![Cap field settings](.github/doc/cap_field_settings.png "Cap field settings")
 
