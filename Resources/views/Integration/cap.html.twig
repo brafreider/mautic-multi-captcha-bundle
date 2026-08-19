@@ -150,9 +150,13 @@ Varables
 {% block cap %}
     {% set serverUrl = field.customParameters.server_url|default('')|trim('/', 'right') %}
     {% set siteKey = field.customParameters.site_key|default(null) %}
+    {% set mode = field.properties.mode|default('manual') %}
+    {% set autoSolve = mode in ['auto', 'auto_hidden'] %}
+    {% set hidden = mode == 'auto_hidden' %}
+    {% set widgetId = inputAttributes.id ~ '_widget' %}
 
     {% if field.showLabel %}
-        <label {% for attrName, attrValue in labelAttributes %}{{ attrName }}="{% if attrValue is iterable %}{{ attrValue|join(' ') }}{% else %}{{ attrValue }}{% endif %}"{% endfor %}>
+        <label {% for attrName, attrValue in labelAttributes %}{{ attrName }}="{% if attrValue is iterable %}{{ attrValue|join(' ') }}{% else %}{{ attrValue }}{% endif %}"{% endfor %}{% if hidden %} style="display: none;"{% endif %}>
             {{ field.label }}
         </label>
     {% endif %}
@@ -166,7 +170,7 @@ Varables
         {% if inForm is defined and (true == inForm or inForm is not empty) %}
             {# In backend form builder - show placeholder only, no active widget #}
             <div style="padding: 10px; background: #f5f5f5; border: 1px dashed #ccc; text-align: center;">
-                Cap CAPTCHA Widget
+                Cap CAPTCHA Widget ({% if mode == 'auto' %}auto-solve{% elseif mode == 'auto_hidden' %}auto-solve, hidden{% else %}manual{% endif %})
             </div>
         {% else %}
             {# In frontend - point the self-hosted widget script at our self-hosted WASM solver.
@@ -187,8 +191,27 @@ Varables
                 })();
             </script>
 
-            <div class="mauticform-inner">
-                <cap-widget data-cap-api-endpoint="{{ serverUrl }}/{{ siteKey }}/"></cap-widget>
+            {% if autoSolve %}
+                {# Cap's own anti-tamper logic actively restores its branding link
+                   whenever the widget host is visible, so hiding just the link isn't
+                   possible - only hiding the entire widget (auto_hidden) is honored. #}
+                <script>
+                    (function() {
+                        if (typeof customElements === "undefined")
+                            return;
+
+                        customElements.whenDefined("cap-widget").then(function() {
+                            var widget = document.getElementById("{{ widgetId }}");
+
+                            if (widget)
+                                widget.solve();
+                        });
+                    })();
+                </script>
+            {% endif %}
+
+            <div class="mauticform-inner"{% if hidden %} style="display: none;"{% endif %}>
+                <cap-widget id="{{ widgetId }}" data-cap-api-endpoint="{{ serverUrl }}/{{ siteKey }}/"></cap-widget>
             </div>
         {% endif %}
     </div>

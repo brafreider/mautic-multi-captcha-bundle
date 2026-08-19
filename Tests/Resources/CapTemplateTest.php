@@ -136,6 +136,36 @@ class CapTemplateTest extends TestCase {
     /**
      * @test
      */
+    public function testTemplateSupportsAutoSolveModes(): void {
+        $content = file_get_contents(self::TEMPLATE_PATH);
+
+        // Reads the per-field "mode" property (set via CapType) and only
+        // auto-triggers solve() for the two auto modes, waiting for the
+        // custom element to actually be defined first.
+        $this->assertStringContainsString("field.properties.mode", $content);
+        $this->assertStringContainsString("customElements.whenDefined(\"cap-widget\")", $content);
+        $this->assertStringContainsString(".solve()", $content);
+    }
+
+    /**
+     * @test
+     */
+    public function testTemplateHidesWidgetOnlyInAutoHiddenMode(): void {
+        $content = file_get_contents(self::TEMPLATE_PATH);
+
+        // auto_hidden must hide the actual <cap-widget> host itself (not just
+        // a wrapper) - Cap's anti-tamper logic only skips restoring its
+        // branding link when the widget's own host element is hidden.
+        $this->assertMatchesRegularExpression(
+            '/<div class="mauticform-inner"\{% if hidden %\}[^}]*display:\s*none[^}]*\{% endif %\}>\s*<cap-widget/',
+            $content,
+            'The element wrapping <cap-widget> must be hidden in auto_hidden mode'
+        );
+    }
+
+    /**
+     * @test
+     */
     public function testWidgetScriptAndWasmSolverVersionsAreCompatible(): void {
         $scriptContent = file_get_contents(__DIR__ . '/../../Assets/js/cap.min.js');
 

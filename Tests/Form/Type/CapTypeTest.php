@@ -12,9 +12,8 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for CapType
  *
  * Cap always combines its proof-of-work and instrumentation challenges (both
- * are configured server-side on the Cap Standalone instance), so this form
- * type intentionally exposes no per-field options - these tests guard that
- * the type still builds a valid, submittable form.
+ * are configured server-side on the Cap Standalone instance), so the only
+ * per-field option is how/when the widget solves (mode).
  */
 class CapTypeTest extends TestCase {
 
@@ -27,14 +26,47 @@ class CapTypeTest extends TestCase {
     /**
      * @test
      */
-    public function testFormBuildsWithoutFields(): void {
+    public function testFormHasOnlyModeField(): void {
         $form = $this->formFactory->create(CapType::class);
 
-        $form->submit([]);
+        $this->assertCount(1, $form->all());
+        $this->assertTrue($form->has('mode'));
+    }
 
-        $this->assertTrue($form->isSubmitted());
-        $this->assertTrue($form->isValid());
-        $this->assertCount(0, $form->all());
+    /**
+     * @test
+     */
+    public function testModeDefaultsToManual(): void {
+        $form = $this->formFactory->create(CapType::class, []);
+
+        $this->assertEquals(CapType::MODE_MANUAL, $form->get('mode')->getData());
+    }
+
+    /**
+     * Property Test: every documented mode value is a valid, submittable choice
+     *
+     * @test
+     */
+    public function testEveryModeChoiceIsSubmittable(): void {
+        foreach ([CapType::MODE_MANUAL, CapType::MODE_AUTO, CapType::MODE_AUTO_HIDDEN] as $mode) {
+            $form = $this->formFactory->create(CapType::class);
+
+            $form->submit(['mode' => $mode]);
+
+            $this->assertTrue($form->isValid(), "mode={$mode} should be a valid submission");
+            $this->assertEquals($mode, $form->get('mode')->getData());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function testModeRespectsStoredValue(): void {
+        $form = $this->formFactory->create(CapType::class, [
+            'mode' => CapType::MODE_AUTO_HIDDEN
+        ]);
+
+        $this->assertEquals(CapType::MODE_AUTO_HIDDEN, $form->get('mode')->getData());
     }
 
     /**
